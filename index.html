@@ -46,6 +46,23 @@
   .fixed-width { width: 200px; }
   .btn-group { margin-top: 15px; }
   .btn-group button { margin-right: 10px; }
+
+  /* "자세한 IP 위치조회" 버튼 별도 스타일 */
+  .btn-blue-outline {
+    border: 1px solid #4A90E2;
+    background-color: white;
+    color: #4A90E2;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  .btn-blue-outline:hover {
+    background-color: #f0f0f0;
+    color: #4A90E2;
+  }
+
   .header-guide a {
     color: inherit;
     text-decoration: none;
@@ -69,19 +86,20 @@
 <h1 style="font-size: 28px;">📧 발신자 IP 찾기</h1>
 
 <div class="header-guide">
-  <a href="https://drive.google.com/file/d/1Pfe-CpoGxF0YmAGp8h44bWryROK8248I/view?usp=drive_link" target="_blank">
+  <a style="color: #4A90E2;" href="https://drive.google.com/file/d/1Pfe-CpoGxF0YmAGp8h44bWryROK8248I/view?usp=drive_link" target="_blank">
     ▶ [아웃룩] 메일헤더 보는법&nbsp;
   </a>
-  <a href="https://drive.google.com/file/d/1GKvQqY5dmx1_i1fKWh9k7RrirDnEWamV/view?usp=drive_link" target="_blank">
+  <a style="color: #4A90E2;" href="https://drive.google.com/file/d/1GKvQqY5dmx1_i1fKWh9k7RrirDnEWamV/view?usp=drive_link" target="_blank">
     ▶ [웹메일] 메일헤더 보는법
   </a>
 
-  <div style="font-size: 15px; line-height: 2.0;">
+  <div style="font-size: 15px; line-height: 2.0; ">
     <ol>
       <li>복사한 이메일 헤더를 입력 후, <strong>“IP 추출”</strong> 버튼 클릭</li>
-      <li><strong>“전체 복사”</strong> 또는 <strong>“세자리 복사”</strong> 버튼 클릭</li>
+      <li><strong>“세자리 복사”</strong> 버튼 클릭 (자세한 IP 위치조회 시 전체 복사)</li>
       <li>“접속IP 대조 시트”에서 Ctrl+F로 검색 후 확인</li>
       <li>차단할 IP를 시트 우측에 입력</li>
+  
     </ol>
   </div>
 </div>
@@ -98,7 +116,7 @@
   <button class="fixed-width" onclick="window.open('https://docs.google.com/spreadsheets/d/1bCTTHagd_ewqsP9ACqu3IFtdwRPVsWZ-mf8pg-7jYyY/edit?usp=sharing', '_blank')">
     접속 IP 내역 시트
   </button>
-  <button class="fixed-width" onclick="window.open('https://mylocation.co.kr/', '_blank')">
+  <button class="fixed-width btn-blue-outline" onclick="window.open('https://mylocation.co.kr/', '_blank')">
     자세한 IP 위치조회
   </button>
 </div>
@@ -148,8 +166,9 @@ async function extractIPs() {
     div.className = 'ip-entry';
     div.innerHTML = `
       <strong>${ip}</strong> → ${location}
-      <button class="ip-copy-btn" onclick="copyIP('${ip}')">전체 복사</button>
       <button class="ip-copy-btn" onclick="copyShortIP('${ip}')">세자리 복사</button>
+      <button class="ip-copy-btn" onclick="copyIP('${ip}')">전체 복사</button>
+
     `;
     resultBox.appendChild(div);
   }
