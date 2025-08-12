@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>이메일 헤더 IP 추출</title>
+<style>
+  * { font-family: 'Pretendard', 'NOTO SANS KR'; }
+  body {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+  }
+  textarea {
+    font-size: 16px;
+    width: 100%;
+    height: 200px;
+  }
+  .ip-result {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+  }
+  .ip-entry {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .provider {
+    margin: 10px 0;
+    font-weight: bold;
+    color: #555;
+  }
+  button {
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  button:hover { background-color: #357ABD; }
+  .fixed-width { width: 200px; }
+  .btn-group { margin-top: 15px; }
+  .btn-group button { margin-right: 10px; }
+  .header-guide a {
+    color: inherit;
+    text-decoration: none;
+    font-size: 15px;
+  }
+  .header-guide a:hover { text-decoration: underline; }
+  .ip-copy-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .ip-copy-btn:hover { background-color: #5a6268; }
+</style>
+</head>
+<body>
+
+<h1 style="font-size: 28px;">📧 발신자 IP 찾기</h1>
+
+<div class="header-guide">
+  <a href="https://drive.google.com/file/d/1Pfe-CpoGxF0YmAGp8h44bWryROK8248I/view?usp=drive_link" target="_blank">
+    ▶ [아웃룩] 메일헤더 보는법&nbsp;
+  </a>
+  <a href="https://drive.google.com/file/d/1GKvQqY5dmx1_i1fKWh9k7RrirDnEWamV/view?usp=drive_link" target="_blank">
+    ▶ [웹메일] 메일헤더 보는법
+  </a>
+
+  <div style="font-size: 15px; line-height: 2.0;">
+    <ol>
+      <li>복사한 이메일 헤더를 입력 후, <strong>“IP 추출”</strong> 버튼 클릭</li>
+      <li><strong>“전체 복사”</strong> 또는 <strong>“세자리 복사”</strong> 버튼 클릭</li>
+      <li>“접속IP 대조 시트”에서 Ctrl+F로 검색 후 확인</li>
+      <li>차단할 IP를 시트 우측에 입력</li>
+    </ol>
+  </div>
+</div>
+
+<textarea id="headerInput" placeholder="이메일 헤더를 붙여넣으세요..."></textarea>
+
+<br><br>
+<button id="extractBtn" class="fixed-width" onclick="extractIPs()">IP 추출</button>
+
+<div class="provider" id="providerBox"></div>
+<div class="ip-result" id="resultBox"></div>
+
+<div class="btn-group">
+  <button class="fixed-width" onclick="window.open('https://docs.google.com/spreadsheets/d/1bCTTHagd_ewqsP9ACqu3IFtdwRPVsWZ-mf8pg-7jYyY/edit?usp=sharing', '_blank')">
+    접속 IP 내역 시트
+  </button>
+  <button class="fixed-width" onclick="window.open('https://mylocation.co.kr/', '_blank')">
+    자세한 IP 위치조회
+  </button>
+</div>
+
+<script>
+async function getIPLocation(ip) {
+  try {
+    const res = await fetch(`https://ipapi.co/${ip}/json/`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    return `${data.city || '-'}, ${data.region || '-'}, ${data.country_name || '-'}`;
+  } catch {
+    return '위치 정보 없음';
+  }
+}
+
+async function extractIPs() {
+  const input = document.getElementById('headerInput').value;
+  const resultBox = document.getElementById('resultBox');
+  resultBox.innerHTML = 'IP 추출 중...';
+
+  const ipRegex = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+  const receivedLines = input.split(/\r?\n/).filter(line => line.toLowerCase().startsWith("received"));
+  const ipSet = new Set();
+
+  for (const line of receivedLines) {
+    const matches = line.match(ipRegex);
+    matches?.forEach(ip => {
+      const [a,b] = ip.split('.').map(Number);
+      const isPrivate =
+        a === 10 || a === 127 ||
+        (a === 192 && b === 168) ||
+        (a === 172 && b >= 16 && b <= 31);
+      if (!isPrivate) ipSet.add(ip);
+    });
+  }
+
+  if (!ipSet.size) {
+    resultBox.innerHTML = '유효한 외부 IP 주소를 찾을 수 없습니다.';
+    return;
+  }
+
+  resultBox.innerHTML = '<strong>IP 주소 및 위치 정보:</strong><br><br>';
+  for (const ip of ipSet) {
+    const location = await getIPLocation(ip);
+    const div = document.createElement('div');
+    div.className = 'ip-entry';
+    div.innerHTML = `
+      <strong>${ip}</strong> → ${location}
+      <button class="ip-copy-btn" onclick="copyIP('${ip}')">전체 복사</button>
+      <button class="ip-copy-btn" onclick="copyShortIP('${ip}')">세자리 복사</button>
+    `;
+    resultBox.appendChild(div);
+  }
+}
+
+function copyIP(ip) {
+  navigator.clipboard.writeText(ip).catch(err => alert('복사 실패: ' + err));
+}
+
+function copyShortIP(ip) {
+  navigator.clipboard.writeText(ip.split('.').slice(0, 3).join('.') + '.')
+    .catch(err => alert('복사 실패: ' + err));
+}
+</script>
+
+</body>
+</html>
